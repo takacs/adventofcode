@@ -1,7 +1,7 @@
 import sys
 sys.setrecursionlimit(15000)
 
-inp = open('day8in.txt', 'r').read().strip().split(' ')
+inp = open('day08in.txt', 'r').read().strip().split(' ')
 inp = [int(n) for n in inp]
 
 class TreeData:

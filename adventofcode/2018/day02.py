@@ -33,5 +33,5 @@ def findclose(fn):
             if stringdiff(i, j) == 1:
                 return matchingchars(i,j)
 
-print(checksum('day2in.txt'))
-print(findclose('day2in.txt'))
+print(checksum('day02in.txt'))
+print(findclose('day02in.txt'))

@@ -3,7 +3,7 @@ import sys
 
 sys.setrecursionlimit(1500)
 
-with open('day5in.py', 'r') as f:
+with open('day05in.py', 'r') as f:
     fl = f.read().strip()
 
 poly = [ c+c.upper() for c in ascii_lowercase ]

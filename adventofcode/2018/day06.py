@@ -8,7 +8,7 @@ FIELD_SIZE = 400
 field = [[None for x in range(FIELD_SIZE)] for x in range(FIELD_SIZE)]
 coords = []
 
-with open('day6in.txt', 'r') as f:
+with open('day06in.txt', 'r') as f:
     for i, line in enumerate(f):
         x,y = line.split(',')
         x,y = int(x), int(y)

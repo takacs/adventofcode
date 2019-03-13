@@ -3,7 +3,7 @@ import numpy as np
 
 graph = { ac:[] for ac in ascii_uppercase}
 
-with open('day7in.txt', 'r') as f:
+with open('day07in.txt', 'r') as f:
     for line in f:
         l = line.split(' ')
         b, a = l[1], l[-3]

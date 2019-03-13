@@ -28,5 +28,5 @@ def solve2(fn, countls, count):
 
     return solve2(fn, countls, count)
 
-print(solve('day1in1.txt'))
-print(solve2('day1in2.txt', [0], 0))
+print(solve('day01in1.txt'))
+print(solve2('day01in2.txt', [0], 0))
