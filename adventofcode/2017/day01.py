@@ -5,11 +5,7 @@ INP = """
 # Part 1
 
 digits = INP + INP[0]
-
-count = 0
-for curr, nxt in zip(digits[:-1], digits[1:]):
-    if curr == nxt:
-        count += int(curr)
+count = sum([ int(curr) for curr, nxt in zip(digits[:-1], digits[1:]) if curr == nxt ])
 
 print(f'Part 1: {count}')
 
@@ -19,9 +15,6 @@ sz = len(INP)//2
 digits = INP
 halfway = INP[sz:] + INP[:sz]
 
-count = 0
-for curr, nxt in zip(digits, halfway):
-    if curr == nxt:
-        count += int(curr)
+count = sum([ int(curr) for curr, nxt in zip(digits, halfway) if curr == nxt ])
 
 print(f'Part 2: {count}')
