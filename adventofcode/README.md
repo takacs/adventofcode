@@ -1,3 +1,13 @@
 # Advent of Code
 
-Solutions to problems from the advent of code yearly competition. [aoc]()
+Solutions for problems from the advent of code yearly competition. [aoc]()
+
+### Progress:
+
+```
+2015: [####.....................]
+2016: [#........................]
+2017: [#........................]
+2018: [#############............]
+```
+
