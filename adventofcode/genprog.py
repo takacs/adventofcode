@@ -17,4 +17,10 @@ print('Advent of Code progress')
 for k, v in d.items():
     print(k + ': ', end='')
     print('[' + v*'#', end='')
-    print((25-v)*'.' + ']')
+    print((25-v)*'.' + '] ')
+
+
+print()
+print('Ovrl: ', end='')
+print('[' + sum(d.values())//4*'#', end='')
+print((25-sum(d.values())//4)*'.' + ']')
