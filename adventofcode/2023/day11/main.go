@@ -1,25 +1,49 @@
 package main
 
 import (
-    "fmt"
-    "os"
-    "bufio"
+	"bufio"
+	"fmt"
+	"os"
 )
 
 type C struct {
     x,y int
 }
 
-func (c C) distance(c2 C) int {
-    dx := c.x - c2.x
-    dy := c.y - c2.y
-    if dx < 0 {
-	dx = dx*-1
+func (c C) distance(c2 C, rs, cs []int, mx int) int {
+    xm := 0
+    for _, ro := range rs {
+	if between(c.y, c2.y, ro) {
+	    xm += mx-1
+	}
     }
-    if dy < 0 {
-	dy = dy*-1
+    for _, co := range cs {
+	if between(c.x, c2.x, co) {
+	    xm += mx-1
+	}
     }
-    return dx+dy
+
+    return manhattan(c,c2) + xm
+}
+
+func manhattan(c, c2 C) int {
+    x := c.x - c2.x
+    y := c.y - c2.y
+    if x < 0 {
+	x *= -1
+    }
+    if y < 0 {
+	y *= -1
+    }
+    return x+y
+}
+
+func between(a, b, x int) bool {
+    lo, hi := a, b
+    if lo > hi {
+	lo, hi = b, a
+    }
+    return lo < x && x < hi
 }
 
 func transpose(matrix [][]rune) [][]rune {
@@ -49,15 +73,14 @@ func alldot(r []rune) bool {
     return true
 }
 
-func extend(m [][]rune) [][]rune {
-    rr := [][]rune{}
-    for _, r := range m {
-	rr = append(rr, r)
+func extract(m [][]rune) []int {
+    x := []int{}
+    for i, r := range m {
 	if alldot(r) {
-	    rr = append(rr, r)
+	    x = append(x, i)
 	}
     }
-    return rr
+    return x
 }
 
 func getG(m [][]rune) []C{
@@ -65,7 +88,7 @@ func getG(m [][]rune) []C{
     for i := 0; i < len(m); i++ {
 	for j := 0; j < len(m[i]); j++ {
 	    if m[i][j] == '#' {
-		cs = append(cs, C{x:i, y:j})
+		cs = append(cs, C{x:j, y:i})
 	    }
 	}
     }
@@ -73,7 +96,7 @@ func getG(m [][]rune) []C{
 }
 
 func main() {
-    file, err := os.Open("day11.test")
+    file, err := os.Open("day11.in")
     if err != nil {
         fmt.Println("Error opening file:", err)
         return
@@ -89,21 +112,27 @@ func main() {
 	m = append(m, line)
     }
 
-    m = extend(m)
+    rs := extract(m)
     m = transpose(m)
-    m = extend(m)
+    cs := extract(m)
 
     gs := getG(m)
     fmt.Println(gs)
+    fmt.Println(rs,cs)
     
     s := 0
+    s2 := 0
     for i := 0; i < len(gs); i++ {
 	for j := i+1; j < len(gs); j++ {
-	    s += gs[i].distance(gs[j])
+	    d := gs[i].distance(gs[j], cs, rs, 2)
+	    fmt.Println(gs[i], gs[j], d)
+	    s += d
+	    s2 += gs[i].distance(gs[j], cs, rs, 1000000)
 	}
     }
 
     fmt.Printf("Part 1: %v\n", s)
+    fmt.Printf("Part 2: %v\n", s2)
 
 }
 

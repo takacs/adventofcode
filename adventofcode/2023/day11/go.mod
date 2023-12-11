@@ -1,3 +1,3 @@
-module day10
+module day11
 
 go 1.20
