@@ -7,13 +7,11 @@ import (
 )
 
 func transpose(matrix [][]rune) [][]rune {
-	fmt.Println("M->", matrix)
     if len(matrix) == 0 || len(matrix[0]) == 0 {
         return matrix
     }
 
     numRows, numCols := len(matrix), len(matrix[0])
-	fmt.Println(numRows, numCols)
 
     result := make([][]rune, numCols)
     for i := range result {
@@ -25,7 +23,6 @@ func transpose(matrix [][]rune) [][]rune {
             result[j][i] = matrix[i][j]
         }
     }
-	fmt.Println("END")
 
     return result
 }
@@ -46,17 +43,25 @@ func toRuneMap(s string) [][]rune {
 	return rm
 }
 
-func isReflection(rm [][]rune, m int) bool {
+func isReflection(rm [][]rune, m, h int) bool {
 	li, ri := m-1, m
+	diff := 0
 	for li >= 0 && ri < len(rm) {
-		if string(rm[li]) != string(rm[ri]) {
-			return false
-		}
+		diff += hamming(string(rm[li]), string(rm[ri]))
 		li--
 		ri++
 	}
-	return true
+	return diff == h
+}
 
+func hamming(str1, str2 string) int {
+	distance := 0
+	for i := 0; i < len(str1); i++ {
+		if str1[i] != str2[i] {
+			distance++
+		}
+	}
+	return distance
 }
 
 func main() {
@@ -67,32 +72,38 @@ func main() {
     fs := string(f)
     m := strings.Split(fs, "\n\n")
    
-	tot := 0
-	rm := [][]rune{}
-	N, M := 0, 0
-	for _, mg := range m {
-		rm = toRuneMap(mg)
-		N = len(rm)
-		M = len(rm[0])
-		for i := 1; i < N; i++ {
-			if isReflection(rm, i) {
-				fmt.Printf("Validrow: %d\n", i)
-				tot += i*100
-				break
+	for x := 0; x < 2; x++ {
+		tot := 0
+		rm := [][]rune{}
+		N, M := 0, 0
+		cr := 0
+		for _, mg := range m {
+			cr = 0
+			rm = toRuneMap(mg)
+			N = len(rm)
+			M = len(rm[0])
+			for i := 1; i < N; i++ {
+				if isReflection(rm, i, x) {
+					cr += i*100
+					break
+				}
 			}
-		}
+			tot += cr
+			if cr > 0 {
+				continue
+			}
 
-		rm = transpose(rm)
-		for i := 1; i < M; i++ {
-			if isReflection(rm, i) {
-				fmt.Printf("Validcol: %d\n", i)
-				tot += i
-				break
+			rm = transpose(rm)
+			for i := 1; i < M; i++ {
+				if isReflection(rm, i, x) {
+					cr += i
+					break
+				}
 			}
+			tot += cr
 		}
+		fmt.Printf("Part %v: %v\n", x+1, tot)
 	}
 
-
-	fmt.Println(tot)
     
 }
