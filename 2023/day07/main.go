@@ -18,22 +18,23 @@ type Hand struct {
 
 func (h Hand) score() int {
 	x := h.hand
+	r := 0
 	if x == "5" {
-		return 0
+		r = 0
 	} else if x == "41" {
-		return 1
+		r = 1
 	} else if x == "32" {
-		return 2
+		r = 2
 	} else if x == "311" {
-		return 3
+		r = 3
 	} else if x == "221" {
-		return 4
+		r = 4
 	} else if x == "2111" {
-		return 5
-	} else if x == "1111" {
-		return 6
+		r = 5
+	} else if x == "11111" {
+		r = 6
 	}
-	return 7
+	return r
 }
 
 func counter(s string) string {
@@ -44,11 +45,24 @@ func counter(s string) string {
     }
 	
 	keys := ""
-	for _, v := range counter {
+	saveval := -1
+	for k, v := range counter {
+		if k == '1' {
+			saveval = v
+			continue
+		}
 		vs := strconv.Itoa(v)
 		keys += vs
 	}
-    return sortstring(keys)
+	ss := sortstring(keys)
+	ns := ss
+	if saveval == 5 {
+		return "5"
+	} else if saveval > 0 {
+		v, _ := strconv.Atoi(string(ss[0]))
+		ns = strconv.Itoa(v+saveval) + ss[1:]
+	} 
+	return ns 
 }
 
 func sortstring(w string) string {
@@ -62,44 +76,59 @@ func sortstring(w string) string {
 }
 
 func main() {
-    file, err := os.Open("day07.in")
-    if err != nil {
-        fmt.Println("Error opening file:", err)
-        return
-    }
-    defer file.Close()
 
-    hs := []Hand{}
-    scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		p := strings.Fields(line)
-		p[0] = strings.Replace(p[0], "T", ":", -1)
-		p[0] = strings.Replace(p[0], "J", ";", -1)
-		p[0] = strings.Replace(p[0], "Q", "<", -1)
-		p[0] = strings.Replace(p[0], "K", "=", -1)
-		p[0] = strings.Replace(p[0], "A", ">", -1)
-		op := p[0]
-		b, _ := strconv.Atoi(p[1])
-		hs = append(hs, Hand{cards: sortstring(p[0]), bid: b, hand:counter(p[0]), orig: op})
-	}
-	
-	sort.Slice(hs, func(i, j int) bool {
-		is := hs[i].score()
-		js := hs[j].score()
-		if is != js {
-			return is > js
+	parts := []bool{false,true}
+    for _, p2 := range parts {
+		file, err := os.Open("day07.in")
+		if err != nil {
+			fmt.Println("Error opening file:", err)
+			return
 		}
-		ih := hs[i].orig
-		jh := hs[j].orig
-		return ih < jh
-	})
+		scanner := bufio.NewScanner(file)
+		hs := []Hand{}
+		for scanner.Scan() {
+			line := scanner.Text()
+			p := strings.Fields(line)
+			p[0] = strings.Replace(p[0], "T", ":", -1)
+			if p2 {
+				p[0] = strings.Replace(p[0], "J", "1", -1)
+			} else {
+				p[0] = strings.Replace(p[0], "J", ";", -1)
+			}
+			p[0] = strings.Replace(p[0], "Q", "<", -1)
+			p[0] = strings.Replace(p[0], "K", "=", -1)
+			p[0] = strings.Replace(p[0], "A", ">", -1)
+			op := p[0]
+			b, _ := strconv.Atoi(p[1])
+			hs = append(hs, Hand{cards: sortstring(p[0]), bid: b, hand:counter(p[0]), orig: op})
+		}
+		
+		sort.Slice(hs, func(i, j int) bool {
+			is := hs[i].score()
+			js := hs[j].score()
+			if is != js {
+				return is > js
+			}
+			ih := hs[i].orig
+			jh := hs[j].orig
+			return ih < jh
+		})
 
-	tot := 0
-	for i, h := range hs {
-		fmt.Println(h)
-		tot += (i+1)*h.bid
-	}
-
-	fmt.Printf("Part 1: %v\n", tot)
+		tot := 0
+		for i, h := range hs {
+			if p2{
+				fmt.Println(i, h, h.score())
+			}
+			tot += (i+1)*h.bid
+		}
+		
+		if p2 {
+			fmt.Printf("Part 2: %v\n", tot)
+		} else {
+			fmt.Printf("Part 1: %v\n", tot)
+		}
+		file.Close()
+    }
 }
+
+
