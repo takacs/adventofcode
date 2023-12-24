@@ -16,7 +16,7 @@ const (
 
 type Pulse struct {
 	from, destination string
-	p           PulseType
+	p                 PulseType
 }
 
 func (p Pulse) print() {
@@ -24,7 +24,7 @@ func (p Pulse) print() {
 }
 
 type Node interface {
-	handlePulse(PulseType) []Pulse
+	handlePulse(Pulse) []Pulse
 }
 
 type FlipFlop struct {
@@ -39,8 +39,8 @@ type FlipFlop struct {
 	state       bool
 }
 
-func (ff FlipFlop) handlePulse(p PulseType) []Pulse {
-	if p == HIGH {
+func (ff *FlipFlop) handlePulse(p Pulse) []Pulse {
+	if p.p == HIGH {
 		return []Pulse{}
 	}
 	rp := NO
@@ -52,7 +52,7 @@ func (ff FlipFlop) handlePulse(p PulseType) []Pulse {
 	ff.flip()
 	rpt := []Pulse{}
 	for _, d := range ff.destination {
-		rpt = append(rpt, Pulse{from:ff.name, destination: d, p: rp})
+		rpt = append(rpt, Pulse{from: ff.name, destination: d, p: rp})
 	}
 	return rpt
 }
@@ -70,10 +70,15 @@ type Conjunction struct {
 	*/
 	name            string
 	destination     []string
-	recentPulseType map[Node]bool
+	recentPulseType map[string]bool
 }
 
-func (c Conjunction) handlePulse(p PulseType) []Pulse {
+func (c Conjunction) handlePulse(p Pulse) []Pulse {
+	t := false
+	if p.p == HIGH {
+		t = true
+	}
+	c.recentPulseType[p.from] = t
 	if c.allhigh() {
 		rpt := []Pulse{}
 		for _, d := range c.destination {
@@ -83,7 +88,7 @@ func (c Conjunction) handlePulse(p PulseType) []Pulse {
 	}
 	rpt := []Pulse{}
 	for _, d := range c.destination {
-		rpt = append(rpt, Pulse{from: c.name, destination: d, p: LOW})
+		rpt = append(rpt, Pulse{from: c.name, destination: d, p: HIGH})
 	}
 	return rpt
 }
@@ -105,16 +110,33 @@ type Broadcast struct {
 	destination []string
 }
 
-func (b Broadcast) handlePulse(p PulseType) []Pulse {
+func (b Broadcast) handlePulse(p Pulse) []Pulse {
 	rpt := []Pulse{}
 	for _, d := range b.destination {
-		rpt = append(rpt, Pulse{from: b.name, destination: d, p: p})
+		rpt = append(rpt, Pulse{from: b.name, destination: d, p: p.p})
 	}
 	return rpt
 }
 
+func isin(d string, n map[string]Node) bool {
+	for k, _ := range n {
+		if k == d {
+			return true
+		}
+	}
+	return false
+}
+
+func isConjunction(t interface{}) bool {
+	switch t.(type) {
+	case *Conjunction:
+		return true
+	default:
+		return false
+	}
+}
 func main() {
-	f, err := os.ReadFile("day20.test")
+	f, err := os.ReadFile("day20.in")
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -128,11 +150,28 @@ func main() {
 		i := strings.Split(l, " -> ")
 		i[1] = strings.ReplaceAll(i[1], ",", "")
 		if strings.HasPrefix(i[0], "broad") {
-			nodes["broadcast"] = Broadcast{name: "broadcast", destination: strings.Fields(i[1])}
+			nodes["broadcast"] = &Broadcast{name: "broadcast", destination: strings.Fields(i[1])}
 		} else if strings.HasPrefix(i[0], "%") {
-			nodes[i[0][1:]] = FlipFlop{name: i[0][1:], destination: strings.Fields(i[1]), state: false}
+			nodes[i[0][1:]] = &FlipFlop{name: i[0][1:], destination: strings.Fields(i[1]), state: false}
 		} else if strings.HasPrefix(i[0], "&") {
-			nodes[i[0][1:]] = Conjunction{name: i[0][1:], destination: strings.Fields(i[1])}
+			nodes[i[0][1:]] = &Conjunction{name: i[0][1:], destination: strings.Fields(i[1]), recentPulseType: map[string]bool{}}
+		}
+	}
+
+	for _, l := range instructions {
+		if len(l) < 2 {
+			continue
+		}
+		i := strings.Split(l, " -> ")
+		i[0] = strings.ReplaceAll(i[0], "%", "")
+		i[0] = strings.ReplaceAll(i[0], "&", "")
+		i[1] = strings.ReplaceAll(i[1], ",", "")
+		for _, f := range strings.Fields(i[1]) {
+			v, _ := nodes[f]
+			t := isConjunction(v)
+			if t {
+				v.handlePulse(Pulse{from: i[0], destination: "trash", p: LOW})
+			}
 		}
 	}
 
@@ -140,7 +179,7 @@ func main() {
 
 	pq := []Pulse{}
 	lo, hi := 0, 0
-	for i:=0;i<1;i++ {
+	for i := 0; i < 1000; i++ {
 		pq = append(pq, Pulse{from: "button", destination: "broadcast", p: LOW})
 		for len(pq) > 0 {
 			p := pq[0]
@@ -152,15 +191,15 @@ func main() {
 				hi++
 			}
 			pq = pq[1:]
-			if p.destination == "output" {
+			if !isin(p.destination, nodes) {
 				continue
-			}	
-			newpulse := nodes[p.destination].handlePulse(p.p)
+			}
+			newpulse := nodes[p.destination].handlePulse(p)
 			for _, np := range newpulse {
 				pq = append(pq, np)
 			}
 		}
 	}
 
-	fmt.Println(lo, hi)
+	fmt.Println(lo, hi, lo*hi)
 }
