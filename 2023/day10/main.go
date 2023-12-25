@@ -68,6 +68,7 @@ func main() {
     su := false
     sl := false
     sr := false
+    coords := []Point{s}
     for true {
 
 	us := s.move(dirs[2])
@@ -121,7 +122,19 @@ func main() {
 	}
 
 	steps += 1
+	coords = append(coords, s)
     }
     fmt.Println(steps/2)
+    A := 0
+    j := 0
+    for i := 0; i < len(coords); i++ {
+	    j = i-1
+	    if i == 0 {
+		    j = len(coords)-1
+	    }
+	    A += coords[i].x * (coords[(i+1)%len(coords)].y - coords[j].y)
+    }
+    A /= 2
+    fmt.Printf("Part 2: %v\n", A - (len(coords)/2) + 1)
 }
 
