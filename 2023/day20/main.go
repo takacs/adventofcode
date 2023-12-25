@@ -25,6 +25,7 @@ func (p Pulse) print() {
 
 type Node interface {
 	handlePulse(Pulse) []Pulse
+	inDestination(string) bool
 }
 
 type FlipFlop struct {
@@ -59,6 +60,13 @@ func (ff *FlipFlop) handlePulse(p Pulse) []Pulse {
 
 func (ff *FlipFlop) flip() {
 	ff.state = !ff.state
+}
+
+func (ff FlipFlop) inDestination(s string) bool {
+	for _, d := range ff.destination {
+		if d == s { return true }
+	}
+	return false
 }
 
 type Conjunction struct {
@@ -101,6 +109,13 @@ func (c Conjunction) allhigh() bool {
 	return b
 }
 
+func (c Conjunction) inDestination(s string) bool {
+	for _, d := range c.destination {
+		if d == s { return true }
+	}
+	return false
+}
+
 type Broadcast struct {
 	/*
 		There is a single broadcast module (named broadcaster).
@@ -135,6 +150,14 @@ func isConjunction(t interface{}) bool {
 		return false
 	}
 }
+
+func (b Broadcast) inDestination(s string) bool {
+	for _, d := range b.destination {
+		if d == s { return true }
+	}
+	return false
+}
+
 func main() {
 	f, err := os.ReadFile("day20.in")
 	if err != nil {
@@ -142,7 +165,7 @@ func main() {
 	}
 	fs := string(f)
 	instructions := strings.Split(fs, "\n")
-	nodes := map[string]Node{}
+	nodeBase := map[string]Node{}
 	for _, l := range instructions {
 		if len(l) < 2 {
 			continue
@@ -150,11 +173,11 @@ func main() {
 		i := strings.Split(l, " -> ")
 		i[1] = strings.ReplaceAll(i[1], ",", "")
 		if strings.HasPrefix(i[0], "broad") {
-			nodes["broadcast"] = &Broadcast{name: "broadcast", destination: strings.Fields(i[1])}
+			nodeBase["broadcast"] = &Broadcast{name: "broadcast", destination: strings.Fields(i[1])}
 		} else if strings.HasPrefix(i[0], "%") {
-			nodes[i[0][1:]] = &FlipFlop{name: i[0][1:], destination: strings.Fields(i[1]), state: false}
+			nodeBase[i[0][1:]] = &FlipFlop{name: i[0][1:], destination: strings.Fields(i[1]), state: false}
 		} else if strings.HasPrefix(i[0], "&") {
-			nodes[i[0][1:]] = &Conjunction{name: i[0][1:], destination: strings.Fields(i[1]), recentPulseType: map[string]bool{}}
+			nodeBase[i[0][1:]] = &Conjunction{name: i[0][1:], destination: strings.Fields(i[1]), recentPulseType: map[string]bool{}}
 		}
 	}
 
@@ -167,7 +190,7 @@ func main() {
 		i[0] = strings.ReplaceAll(i[0], "&", "")
 		i[1] = strings.ReplaceAll(i[1], ",", "")
 		for _, f := range strings.Fields(i[1]) {
-			v, _ := nodes[f]
+			v, _ := nodeBase[f]
 			t := isConjunction(v)
 			if t {
 				v.handlePulse(Pulse{from: i[0], destination: "trash", p: LOW})
@@ -175,15 +198,15 @@ func main() {
 		}
 	}
 
-	fmt.Println(nodes)
 
 	pq := []Pulse{}
 	lo, hi := 0, 0
+	nodes := nodeBase
 	for i := 0; i < 1000; i++ {
 		pq = append(pq, Pulse{from: "button", destination: "broadcast", p: LOW})
 		for len(pq) > 0 {
 			p := pq[0]
-			p.print()
+			// p.print()
 			if p.p == LOW {
 				lo++
 			}
@@ -191,6 +214,44 @@ func main() {
 				hi++
 			}
 			pq = pq[1:]
+			if !isin(p.destination, nodes) {
+				continue
+			}
+			newpulse := nodes[p.destination].handlePulse(p)
+			for _, np := range newpulse {
+				pq = append(pq, np)
+			}
+		}
+	}
+
+	fmt.Printf("Part 1: %v\n", hi*lo)
+	rxFeed := ""
+	for k, n := range nodeBase {
+		if n.inDestination("rx") {
+			rxFeed = k
+		}
+	}
+
+	feeds := map[string]int{}
+	for k, n := range nodeBase {
+		if n.inDestination(rxFeed) {
+			feeds[k] = -1
+		}
+	}
+	pq = []Pulse{}
+	nodes = nodeBase
+	// Break and look at output to see cycles, then get lowest common multiple
+	for i := 0; true; i++ {
+		pq = append(pq, Pulse{from: "button", destination: "broadcast", p: LOW})
+		for len(pq) > 0 {
+			p := pq[0]
+			pq = pq[1:]
+			_, ok := feeds[p.from]
+
+			if ok && p.p == HIGH {
+				fmt.Println(i, p.from)
+			} 
+
 			if !isin(p.destination, nodes) {
 				continue
 			}
