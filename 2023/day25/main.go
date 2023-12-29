@@ -91,8 +91,12 @@ func main() {
 	}
 
 	NC := map[Edge]int{}
-	for i := 0; i < len(n)/100; i++ {
+	for i := 0; i < len(n); i++ {
+		if i == 100 {
+			break
+		}
 		for j := i + 1; j < len(n); j++ {
+			fmt.Println(i,j)
 			exists, path := findpath(n[i], n[j], G)
 			if exists {
 				for _, edge := range path {
@@ -110,9 +114,8 @@ func main() {
 	sort.Slice(es, func(i, j int) bool {
 		return es[i].v > es[j].v
 	})
-
-	fmt.Println(es[:3])
-	for _, v := range es[:3] {
+	x := es[:3]
+	for _, v := range x {
 		delete(G[v.e.s], v.e.e)
 		delete(G[v.e.e], v.e.s)
 	}
@@ -124,11 +127,11 @@ func main() {
 		curr := Q[0]
 		Q = Q[1:]
 		for k := range G[curr] {
-			exists, _ := S[k]
+			_, exists := S[k]
 			if exists {
 				continue
 			}
-			S[curr] = true
+			S[k] = true
 			Q = append(Q, k)
 		}
 	}
