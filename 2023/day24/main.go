@@ -3,137 +3,72 @@ package main
 import (
 	"fmt"
 	"os"
-	"sort"
 	"strings"
+	"strconv"
 )
 
-type E struct {
-	name string
-	path []Edge
+type Velocity struct {
+	x, y, z int64
 }
 
-type Edge struct {
-	s, e string
+type Position struct {
+	x, y, z int64
 }
 
-type EdgeSlice struct {
-	e Edge
-	v int
+type Line struct {
+	v Velocity
+	p Position
 }
 
-func nedge(s, e string) Edge {
-	s1 := s
-	s2 := e
-	if s1 > s2 {
-		s1, s2 = s2, s1
-	}
-	return Edge{s1, s2}
+func (l Line) a() int64 {
+	return l.v.y
 }
-func findpath(s, t string, G map[string]map[string]int) (bool, []Edge) {
-	Q := []E{}
-	Q = append(Q, E{name: s, path: []Edge{}})
-	S := map[Edge]bool{}
-	for len(Q) > 0 {
-		curr := Q[0]
-		Q = Q[1:]
-		for k := range G[curr.name] {
-			edge := nedge(curr.name, k)
-			if k == t {
-				curr.path = append(curr.path, edge)
-				return true, curr.path
-			}
-			exists, _ := S[edge]
-			if exists {
-				continue
-			}
-			S[edge] = true
-			p := curr.path
-			p = append(p, edge)
-			Q = append(Q, E{name: k, path: p})
-		}
 
-	}
-
-	return false, []Edge{}
+func (l Line) b() int64 {
+	return -1 * l.v.x
 }
+
+func (l Line) c() int64 {
+	return l.v.y * l.p.x - l.v.x * l.p.y
+}
+
+func toi(s string) int64 {
+	v, _ := strconv.Atoi(s)
+	return int64(v)
+}
+
 
 func main() {
-	f, err := os.ReadFile("day25.in")
+	f, err := os.ReadFile("day24.test")
 	if err != nil {
 		fmt.Print(err)
 	}
 	fs := string(f)
+	fs = strings.ReplaceAll(fs, ",", "")
 
-	G := map[string]map[string]int{}
+	lines := []Line{}	
 	for _, l := range strings.Split(fs, "\n") {
-		if len(l) < 2 {
+		if len(l) < 1 {
 			continue
 		}
-		s := strings.Split(l, ":")
-		for _, g := range strings.Fields(s[1]) {
-			_, exists := G[s[0]]
-			if !exists {
-				G[s[0]] = make(map[string]int)
-			}
-			_, exists = G[g]
-			if !exists {
-				G[g] = make(map[string]int)
-			}
-
-			G[s[0]][g] = 1
-			G[g][s[0]] = 1
-		}
+		p := strings.Split(l, "@")
+		ps := strings.Fields(p[0])
+		pos := Position{x: toi(ps[0]), y:toi(ps[1]), z:toi(ps[2])} 
+		vs := strings.Fields(p[1])
+		vel := Velocity{x: toi(vs[0]), y:toi(vs[1]), z:toi(vs[2])}
+		lines = append(lines, Line{p: pos, v:vel})
 	}
 
-	n := []string{}
-	for k := range G {
-		n = append(n, k)
-	}
-
-	NC := map[Edge]int{}
-	for i := 0; i < len(n); i++ {
-		if i == 100 {
-			break
-		}
-		for j := i + 1; j < len(n); j++ {
-			fmt.Println(i,j)
-			exists, path := findpath(n[i], n[j], G)
-			if exists {
-				for _, edge := range path {
-					NC[edge]++
-				}
-			}
-		}
-	}
-
-	es := []EdgeSlice{}
-	for k, v := range NC {
-		es = append(es, EdgeSlice{k, v})
-	}
-
-	sort.Slice(es, func(i, j int) bool {
-		return es[i].v > es[j].v
-	})
-	x := es[:3]
-	for _, v := range x {
-		delete(G[v.e.s], v.e.e)
-		delete(G[v.e.e], v.e.s)
-	}
-
-	Q := []string{n[0]}
-	S := map[string]bool{}
-	S[n[0]] = true
-	for len(Q) > 0 {
-		curr := Q[0]
-		Q = Q[1:]
-		for k := range G[curr] {
-			_, exists := S[k]
-			if exists {
+	for i := 0; i < len(lines); i++ {
+		for j := i+1; j < len(lines); j++ {
+			l1 := lines[i]
+			l2 := lines[j]
+			if l2.a() * l1.b()  == l2.b() * l1.a() {
 				continue
 			}
-			S[k] = true
-			Q = append(Q, k)
+			x := (l1.c()*l2.b() - l2.c()*l1.b()) / (l1.a() * l2.b() - l2.a() * l1.b())
+			y := (l2.c()*l1.a() - l1.c()*l2.a()) / (l1.a() * l2.b() - l2.a() * l1.b())
+			fmt.Println(x,y)
 		}
 	}
-	fmt.Println(len(S), len(G)-len(S))
 }
