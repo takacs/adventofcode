@@ -1,23 +1,16 @@
 from collections import Counter
 
-x = map(lambda x: x.split(), open("day01.in", "r").readlines())
-a = [int(y[0]) for y in x]
-x = map(lambda x: x.split(), open("day01.in", "r").readlines())
-b = [int(y[1]) for y in x]
+inp = open("day01.in", "r").readlines()
 
-print(a, b)
-tot = 0
+L, R = [], []
+for i, v in enumerate(inp):
+    vs = v.split()
+    L.append(int(vs[0]))
+    R.append(int(vs[1]))
 
-for i, j in zip(sorted(a), sorted(b)):
-    tot += abs(i - j)
+s1 = sum(map(lambda x: abs(x[0] - x[1]), zip(sorted(L), sorted(R))))
+print(s1)
 
-print(tot)
-
-
-c = Counter(b)
-
-tot = 0
-for i in a:
-    tot += i * c.get(i, 0)
-
-print(tot)
+C = Counter(R)
+s2 = sum(map(lambda x: x * C.get(x, 0), L))
+print(s2)
